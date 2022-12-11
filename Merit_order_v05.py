@@ -174,7 +174,7 @@ powerplants['color'] = powerplants.apply(assign_color, axis=1)
 # we now adjuts the parameters sent to the plot function to pass only single values at a given timestep
 # when working with datetime indexes, we can use a date as index. 
 # But keep in mind that we need to change iloc and iat to loc and at
-
+mcp_list = []
 timestep = '2020-01-01 00:00:00'
 pp_df = powerplants.copy()
 pp_df['marginal_cost'] = marginal_costs.loc[timestep]
@@ -241,6 +241,7 @@ for i in range(len(secnario)):
 #                           feed_in = feed_in_df.loc[timestep].sum())
     print('mcp')
     print(mcp)
+    mcp_list.append(mcp)
     powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
     fuel_prices = pd.read_csv('inputs_2/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
     emission_factors = pd.read_csv('inputs_2/2020_emissionFactors_GER_1h.csv', index_col=0)
