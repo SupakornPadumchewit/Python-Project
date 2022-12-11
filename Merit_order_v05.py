@@ -187,57 +187,14 @@ plot_merit_order_curve(pp_df,
 # %%
 '''
 Change in Hard Coal price
-
-'''
-
-fuel_prices['hard coal'] = fuel_prices['hard coal']/2
-
-
-marginal_costs = powerplants.apply(calculate_marginal_cost, axis=1, fuel_prices=fuel_prices, emission_factors=emission_factors).T
-mcp_df = pd.DataFrame(columns=['mcp'], index=demand_df.index, data=0.)
-for i in range(len(demand_df)):
-    pp_df = powerplants.copy()
-    pp_df['marginal_cost'] = marginal_costs.iloc[i]
-    mcp = calculate_market_clearing_price(pp_df,
-                                          demand_df['demand'].iat[i],
-                                          feed_in_df.iloc[i].sum())
-    mcp_df['mcp'].iat[i] = mcp
-powerplants['color'] = powerplants.apply(assign_color, axis=1)
-timestep = '2020-01-01 00:00:00'
-pp_df = powerplants.copy()
-pp_df['marginal_cost'] = marginal_costs.loc[timestep]
-plot_merit_order_curve(pp_df,
-                       mcp = mcp_df['mcp'].at[timestep],
-                       demand = demand_df['demand'].at[timestep],
-                       feed_in = feed_in_df.loc[timestep].sum())
-powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
-fuel_prices = pd.read_csv('inputs_2/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
-emission_factors = pd.read_csv('inputs_2/2020_emissionFactors_GER_1h.csv', index_col=0)
-
-demand_df = pd.read_csv('inputs_2/2020_demand_GER_1h.csv', index_col=0, parse_dates=True)
-feed_in_df = pd.read_csv('inputs_2/2020_renewablesCF_GER_1h.csv', index_col=0, parse_dates=True)
-
-# Installed renewable Capacity in MW
-installed_pv = 48206
-installed_onshore_wind = 53184
-installed_offshore_wind = 7504
-
-feed_in_df['solar'] *= installed_pv
-feed_in_df['onshore'] *= installed_onshore_wind
-feed_in_df['offshore'] *= installed_offshore_wind
-
-
-'''
-Change in Hard Coal price
 '''
 secnario = ['hard coal', 'lignite', 'natural gas', 'nuclear']
 for i in range(len(secnario)):
     fuel_prices[secnario[i]] = fuel_prices[secnario[i]]/2
-    print(fuel_prices)
+#    print(fuel_prices)
     
     
     marginal_costs = powerplants.apply(calculate_marginal_cost, axis=1, fuel_prices=fuel_prices, emission_factors=emission_factors).T
-    print(marginal_cost)
     mcp_df = pd.DataFrame(columns=['mcp'], index=demand_df.index, data=0.)
     def plot_merit_order_curve_hc_d(powerplants, mcp, demand, feed_in):
         # Plot the merit order curve
@@ -261,7 +218,7 @@ for i in range(len(secnario)):
         plt.ylabel('Capacity')
         plt.title('Merit order curve')
         plt.show()
-    
+#    print('mcp of', secnario[i])
     for i in range(len(demand_df)):
         pp_df = powerplants.copy()
         pp_df['marginal_cost'] = marginal_costs.iloc[i]
@@ -273,16 +230,18 @@ for i in range(len(secnario)):
     timestep = '2020-01-01 00:00:00'
     pp_df = powerplants.copy()
     pp_df['marginal_cost'] = marginal_costs.loc[timestep]
-    plot_merit_order_curve_hc_d(pp_df,
-                           mcp = mcp_df['mcp'].at[timestep],
-                           demand = demand_df['demand'].at[timestep],
-                           feed_in = feed_in_df.loc[timestep].sum())
-    powerplants = pd.read_csv('inputs/2020_majorPowerplants_GER_1h.csv', index_col=0)
-    fuel_prices = pd.read_csv('inputs/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
-    emission_factors = pd.read_csv('inputs/2020_emissionFactors_GER_1h.csv', index_col=0)
+#    plot_merit_order_curve_hc_d(pp_df,
+#                           mcp = mcp_df['mcp'].at[timestep],
+#                           demand = demand_df['demand'].at[timestep],
+#                           feed_in = feed_in_df.loc[timestep].sum())
+    print('mcp')
+    print(mcp)
+    powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
+    fuel_prices = pd.read_csv('inputs_2/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
+    emission_factors = pd.read_csv('inputs_2/2020_emissionFactors_GER_1h.csv', index_col=0)
     
-    demand_df = pd.read_csv('inputs/2020_demand_GER_1h.csv', index_col=0, parse_dates=True)
-    feed_in_df = pd.read_csv('inputs/2020_renewablesCF_GER_1h.csv', index_col=0, parse_dates=True)
+    demand_df = pd.read_csv('inputs_2/2020_demand_GER_1h.csv', index_col=0, parse_dates=True)
+    feed_in_df = pd.read_csv('inputs_2/2020_renewablesCF_GER_1h.csv', index_col=0, parse_dates=True)
     
     # Installed renewable Capacity in MW
     installed_pv = 48206
@@ -292,23 +251,18 @@ for i in range(len(secnario)):
     feed_in_df['solar'] *= installed_pv
     feed_in_df['onshore'] *= installed_onshore_wind
     feed_in_df['offshore'] *= installed_offshore_wind
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
