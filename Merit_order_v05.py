@@ -313,6 +313,7 @@ for f in range(len(secnario)):
     print(mcp)
     powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
     fuel_prices = pd.read_csv('inputs_2/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
+    fuel_prices.drop('nuclear', axis=1)
     emission_factors = pd.read_csv('inputs_2/2020_emissionFactors_GER_1h.csv', index_col=0)
     
     demand_df = pd.read_csv('inputs_2/2020_demand_GER_1h.csv', index_col=0, parse_dates=True)
