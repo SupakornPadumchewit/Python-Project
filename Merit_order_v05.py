@@ -109,16 +109,16 @@ def plot_merit_order_curve(powerplants, mcp, demand, feed_in):
     """
     
     # Plot the merit order curve
-    pp = powerplants.sort_values('marginal_cost')
+    powerplants.sort_values('marginal_cost', inplace=True)
 
     plt.plot()
     plt.bar(x=0, height=1, width=feed_in, color='blue', label='Renewables', align='edge', alpha=0.4, edgecolor='k')
 
-    plt.bar(x=feed_in+pp.capacity.cumsum() - pp.capacity,
-            height=pp['marginal_cost'],
-            width=pp.capacity,
+    plt.bar(x=feed_in+powerplants.capacity.cumsum() - powerplants.capacity,
+            height=powerplants['marginal_cost'],
+            width=powerplants.capacity,
             align='edge',
-            color=pp['color'],
+            color=powerplants['color'],
             alpha=0.4,
             edgecolor='k')
 
@@ -131,207 +131,74 @@ def plot_merit_order_curve(powerplants, mcp, demand, feed_in):
     plt.show()
 
 # %% Define the required dictionaries
-powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
-fuel_prices = pd.read_csv('inputs_2/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
-emission_factors = pd.read_csv('inputs_2/2020_emissionFactors_GER_1h.csv', index_col=0)
-
-demand_df = pd.read_csv('inputs_2/2020_demand_GER_1h.csv', index_col=0, parse_dates=True)
-feed_in_df = pd.read_csv('inputs_2/2020_renewablesCF_GER_1h.csv', index_col=0, parse_dates=True)
-
-# Installed renewable Capacity in MW
-installed_pv = 48206
-installed_onshore_wind = 53184
-installed_offshore_wind = 7504
-
-feed_in_df['solar'] *= installed_pv
-feed_in_df['onshore'] *= installed_onshore_wind
-feed_in_df['offshore'] *= installed_offshore_wind
-
-# %%
-colors = {'nuclear': 'green',
-          'lignite': 'brown',
-          'hard coal': 'black',
-          'natural gas': 'red',
-          'oil': 'yellow'
-          }
-
-#Calculate the marginal cost of each power plant
-marginal_costs = powerplants.apply(calculate_marginal_cost, axis=1, fuel_prices=fuel_prices, emission_factors=emission_factors).T
-
-# %%
-mcp_df = pd.DataFrame(columns=['mcp'], index=demand_df.index, data=0.)
-for i in range(len(demand_df)):
-    pp_df = powerplants.copy()
-    pp_df['marginal_cost'] = marginal_costs.iloc[i]
-    mcp = calculate_market_clearing_price(pp_df,
-                                          demand_df['demand'].iat[i],
-                                          feed_in_df.iloc[i].sum())
-    mcp_df['mcp'].iat[i] = mcp
-
-# %%
-powerplants['color'] = powerplants.apply(assign_color, axis=1)
-
-# we now adjuts the parameters sent to the plot function to pass only single values at a given timestep
-# when working with datetime indexes, we can use a date as index. 
-# But keep in mind that we need to change iloc and iat to loc and at
-list_mcp = []
-timestep = '2020-01-01 00:00:00'
-pp_df = powerplants.copy()
-pp_df['marginal_cost'] = marginal_costs.loc[timestep]
-
-plot_merit_order_curve(pp_df,
-                       mcp = mcp_df['mcp'].at[timestep],
-                       demand = demand_df['demand'].at[timestep],
-                       feed_in = feed_in_df.loc[timestep].sum())
-
-# %%
-'''
-price change secnario
-
-'''
-secnario = ['hard coal', 'lignite', 'oil', 'natural gas', 'nuclear']
-list_mcp_d = []
-list_mcp_i = []
-'''
-down change
-'''
-print('50% lower')
-for f in range(len(secnario)):
-    fuel_prices[secnario[f]] = fuel_prices[secnario[f]]/2
-#    print(fuel_prices)
-    
-    
-    marginal_costs = powerplants.apply(calculate_marginal_cost, axis=1, fuel_prices=fuel_prices, emission_factors=emission_factors).T
-    mcp_df = pd.DataFrame(columns=['mcp'], index=demand_df.index, data=0.)
-    def plot_merit_order_curve_hc_d(powerplants, mcp, demand, feed_in):
-        # Plot the merit order curve
-        pp = powerplants.sort_values('marginal_cost')
-    
-        plt.plot()
-        plt.bar(x=0, height=1, width=feed_in, color='blue', label='Renewables', align='edge', alpha=0.4, edgecolor='k')
-    
-        plt.bar(x=feed_in+pp.capacity.cumsum() - pp.capacity,
-                height=pp['marginal_cost'],
-                width=pp.capacity,
-                align='edge',
-                color=pp['color'],
-                alpha=0.4,
-                edgecolor='k')
-    
-        plt.xlim(left=0)
-        plt.plot([demand,demand], [0,mcp], 'r--', label='demand')
-        plt.plot([0,demand], [mcp,mcp], 'r--', label='mcp')
-        plt.xlabel('Marginal cost')
-        plt.ylabel('Capacity')
-        plt.title('Merit order curve')
-        plt.show()
-#    print('mcp of', secnario[i])
-    for i in range(len(demand_df)):
-        pp_df = powerplants.copy()
-        pp_df['marginal_cost'] = marginal_costs.iloc[i]
-        mcp = calculate_market_clearing_price(pp_df,
-                                              demand_df['demand'].iat[i],
-                                              feed_in_df.iloc[i].sum())
-        mcp_df['mcp'].iat[i] = mcp
-    powerplants['color'] = powerplants.apply(assign_color, axis=1)
-    timestep = '2020-01-01 00:00:00'
-    pp_df = powerplants.copy()
-    pp_df['marginal_cost'] = marginal_costs.loc[timestep]
-#    plot_merit_order_curve_hc_d(pp_df,
-#                           mcp = mcp_df['mcp'].at[timestep],
-#                           demand = demand_df['demand'].at[timestep],
-#                           feed_in = feed_in_df.loc[timestep].sum())
-    print('Market Clearing Price When The Price of', secnario[f], 'goes 50% down')
-    list_mcp_d.append(mcp)
-    print(mcp)
-    powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
-    fuel_prices = pd.read_csv('inputs_2/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
-    emission_factors = pd.read_csv('inputs_2/2020_emissionFactors_GER_1h.csv', index_col=0)
-    
-    demand_df = pd.read_csv('inputs_2/2020_demand_GER_1h.csv', index_col=0, parse_dates=True)
-    feed_in_df = pd.read_csv('inputs_2/2020_renewablesCF_GER_1h.csv', index_col=0, parse_dates=True)
-    
-    # Installed renewable Capacity in MW
-    installed_pv = 48206
-    installed_onshore_wind = 53184
-    installed_offshore_wind = 7504
-    
-    feed_in_df['solar'] *= installed_pv
-    feed_in_df['onshore'] *= installed_onshore_wind
-    feed_in_df['offshore'] *= installed_offshore_wind
-'''
-up change
-'''
-print('50 higher')
-for f in range(len(secnario)):
-    fuel_prices[secnario[f]] = fuel_prices[secnario[f]]*1.5
-#    print(fuel_prices)
-    
-    
-    marginal_costs = powerplants.apply(calculate_marginal_cost, axis=1, fuel_prices=fuel_prices, emission_factors=emission_factors).T
-    mcp_df = pd.DataFrame(columns=['mcp'], index=demand_df.index, data=0.)
-    def plot_merit_order_curve_hc_d(powerplants, mcp, demand, feed_in):
-        # Plot the merit order curve
-        pp = powerplants.sort_values('marginal_cost')
-    
-        plt.plot()
-        plt.bar(x=0, height=1, width=feed_in, color='blue', label='Renewables', align='edge', alpha=0.4, edgecolor='k')
-    
-        plt.bar(x=feed_in+pp.capacity.cumsum() - pp.capacity,
-                height=pp['marginal_cost'],
-                width=pp.capacity,
-                align='edge',
-                color=pp['color'],
-                alpha=0.4,
-                edgecolor='k')
-    
-        plt.xlim(left=0)
-        plt.plot([demand,demand], [0,mcp], 'r--', label='demand')
-        plt.plot([0,demand], [mcp,mcp], 'r--', label='mcp')
-        plt.xlabel('Marginal cost')
-        plt.ylabel('Capacity')
-        plt.title('Merit order curve')
-        plt.show()
-#    print('mcp of', secnario[i])
-    for i in range(len(demand_df)):
-        pp_df = powerplants.copy()
-        pp_df['marginal_cost'] = marginal_costs.iloc[i]
-        mcp = calculate_market_clearing_price(pp_df,
-                                              demand_df['demand'].iat[i],
-                                              feed_in_df.iloc[i].sum())
-        mcp_df['mcp'].iat[i] = mcp
-    powerplants['color'] = powerplants.apply(assign_color, axis=1)
-    timestep = '2020-01-01 00:00:00'
-    pp_df = powerplants.copy()
-    pp_df['marginal_cost'] = marginal_costs.loc[timestep]
-#    plot_merit_order_curve_hc_d(pp_df,
-#                           mcp = mcp_df['mcp'].at[timestep],
-#                           demand = demand_df['demand'].at[timestep],
-#                           feed_in = feed_in_df.loc[timestep].sum())
-    print('Market Clearing Price When The Price of', secnario[f], 'goes 50% up')
-    list_mcp_i.append(mcp)
-    print(mcp)
-    powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
-    fuel_prices = pd.read_csv('inputs_2/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
-    fuel_prices.drop('nuclear', axis=1)
-    emission_factors = pd.read_csv('inputs_2/2020_emissionFactors_GER_1h.csv', index_col=0)
-    
-    demand_df = pd.read_csv('inputs_2/2020_demand_GER_1h.csv', index_col=0, parse_dates=True)
-    feed_in_df = pd.read_csv('inputs_2/2020_renewablesCF_GER_1h.csv', index_col=0, parse_dates=True)
-    
-    # Installed renewable Capacity in MW
-    installed_pv = 48206
-    installed_onshore_wind = 53184
-    installed_offshore_wind = 7504
-    
-    feed_in_df['solar'] *= installed_pv
-    feed_in_df['onshore'] *= installed_onshore_wind
-    feed_in_df['offshore'] *= installed_offshore_wind
-    
- #%%   
-    
-tech_out = ['nuclear', 'lignite', 'hard coal']
+tech_out_list = ['nuclear', 'lignite', 'hard coal']
 list_mcp_out = []
+for tech_out in tech_out_list:
+    powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
+    fuel_prices = pd.read_csv('inputs_2/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
+    emission_factors = pd.read_csv('inputs_2/2020_emissionFactors_GER_1h.csv', index_col=0)
+    
+    demand_df = pd.read_csv('inputs_2/2020_demand_GER_1h.csv', index_col=0, parse_dates=True)
+    feed_in_df = pd.read_csv('inputs_2/2020_renewablesCF_GER_1h.csv', index_col=0, parse_dates=True)
+    
+    fuel_prices = fuel_prices.drop(tech_out, axis=1)
+    emission_factors = emission_factors.drop(tech_out, axis = 0)
+    powerplants = powerplants.drop(powerplants[powerplants['technology']==tech_out].index)
+    # Installed renewable Capacity in MW
+    installed_pv = 48206
+    installed_onshore_wind = 53184
+    installed_offshore_wind = 7504
+    
+    feed_in_df['solar'] *= installed_pv
+    feed_in_df['onshore'] *= installed_onshore_wind
+    feed_in_df['offshore'] *= installed_offshore_wind
+    
+    # %%
+    colors = {'nuclear': 'green',
+              'lignite': 'brown',
+              'hard coal': 'black',
+              'natural gas': 'red',
+              'oil': 'yellow'
+              }
+    
+    #Calculate the marginal cost of each power plant
+    marginal_costs = powerplants.apply(calculate_marginal_cost, axis=1, fuel_prices=fuel_prices, emission_factors=emission_factors).T
+    
+    # %%
+    mcp_df = pd.DataFrame(columns=['mcp'], index=demand_df.index, data=0.)
+    for i in range(len(demand_df)):
+        pp_df = powerplants.copy()
+        pp_df['marginal_cost'] = marginal_costs.iloc[i]
+        mcp = calculate_market_clearing_price(pp_df,
+                                              demand_df['demand'].iat[i],
+                                              feed_in_df.iloc[i].sum())
+        mcp_df['mcp'].iat[i] = mcp
+    
+    # %%
+    #powerplants['color'] = powerplants.apply(assign_color, axis=1)
+    #plot_merit_order_curve(powerplants, mcp, demand_df, feed_in_df)
+    
+    # %%
+    
+    
+    
+    
+    
+    
+    
+    
+    marginal_costs = powerplants.apply(calculate_marginal_cost, axis=1, fuel_prices=fuel_prices, emission_factors=emission_factors).T
+    mcp_df = pd.DataFrame(columns=['mcp'], index=demand_df.index, data=0.)
+    print('Market Clearing Price When Phasing Out', tech_out)
+    list_mcp_out.append(mcp)
+    
+    print (mcp)
+    ### Find sum of energy in each source
+    powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
+    powerplants = powerplants.drop(powerplants[powerplants['technology']!=tech_out].index)
+    sum_energy_by_type = sum(powerplants['capacity'])
+    print ("Sum of energy from " + tech_out + " :" + str(sum_energy_by_type)+" MW")
+'''
 for n in range(len(tech_out  )):  
     powerplants = pd.read_csv('inputs_2/2020_majorPowerplants_GER_1h.csv', index_col=0)
     fuel_prices = pd.read_csv('inputs_2/2020_fuelPrices_GER_1h.csv', index_col=0, parse_dates=True)
@@ -353,6 +220,8 @@ for n in range(len(tech_out  )):
     
     marginal_costs = powerplants.apply(calculate_marginal_cost, axis=1, fuel_prices=fuel_prices, emission_factors=emission_factors).T
     mcp_df = pd.DataFrame(columns=['mcp'], index=demand_df.index, data=0.)
+    
+    
     def plot_merit_order_curve_hc_d(powerplants, mcp, demand, feed_in):
         # Plot the merit order curve
         pp = powerplants.sort_values('marginal_cost')
@@ -397,21 +266,7 @@ for n in range(len(tech_out  )):
     
  #%%   
     
-    
-    
-    
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
+'''
     
     
     
